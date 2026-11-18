@@ -12,6 +12,7 @@ import { AuthError } from '@/lib/auth/types';
 import type { AuthProvider } from '@/lib/auth/types';
 import { t } from '@/lib/i18n';
 import { createLogger } from '@/lib/logger';
+import { errorMessage } from '@/lib/errorMessage';
 
 const log = createLogger('LoginForm');
 
@@ -22,7 +23,7 @@ function authErrorMessage(error: unknown): string {
     return t('auth.failed', [error.message]);
   }
   if (error instanceof ApiError) return apiErrorMessage(error);
-  return t('auth.failed', [error instanceof Error ? error.message : String(error)]);
+  return t('auth.failed', [errorMessage(error)]);
 }
 
 export function LoginForm() {

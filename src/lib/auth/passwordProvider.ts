@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { API_PATHS } from '@/config/app.config';
 import { getApi } from '@/lib/api/client';
-import { ApiError } from '@/lib/api/errors';
+import { ApiError, isRejection } from '@/lib/api/errors';
 import { AuthError, type AuthProvider, type Tokens } from './types';
+import { errorMessage } from '@/lib/errorMessage';
 
 const LoginResponse = z.object({
   accessToken: z.string().min(1),
@@ -11,10 +12,6 @@ const LoginResponse = z.object({
 });
 
 type LoginResponse = z.infer<typeof LoginResponse>;
-
-function isRejection(error: unknown): error is ApiError {
-  return error instanceof ApiError && (error.status === 400 || error.status === 401);
-}
 
 function toTokens(res: LoginResponse): Tokens {
   return {
@@ -44,7 +41,7 @@ export const passwordProvider: AuthProvider = {
       if (error instanceof ApiError && error.code === 'INVALID_RESPONSE') {
         throw new AuthError('INVALID_RESPONSE', undefined, { cause: error });
       }
-      const message = error instanceof Error ? error.message : String(error);
+      const message = errorMessage(error);
       throw new AuthError('FAILED', message, { cause: error });
     }
   },

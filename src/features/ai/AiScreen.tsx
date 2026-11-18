@@ -9,16 +9,13 @@ import { builtinProvider as provider } from '@/lib/ai/builtinProvider';
 import { createLogger } from '@/lib/logger';
 import { getPageInfo } from '@/lib/page';
 import type { Truncated } from '@/lib/text';
+import { errorMessage } from '@/lib/errorMessage';
 
 const log = createLogger('AiScreen');
 
 const REQUIREMENTS_URL = 'https://developer.chrome.com/docs/ai/get-started';
 
 type PageProblem = 'RESTRICTED' | 'NO_ACCESS';
-
-function errorReason(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 export default function AiScreen() {
   const availability = useQuery({
@@ -69,7 +66,7 @@ export default function AiScreen() {
     } catch (e) {
       if (!ctl.signal.aborted) {
         log.error('ai request failed', { error: e });
-        setError(errorReason(e));
+        setError(errorMessage(e));
       }
     } finally {
       if (controller.current === ctl) controller.current = null;
@@ -88,7 +85,7 @@ export default function AiScreen() {
       await availability.refetch();
     } catch (e) {
       log.error('ai download failed', { error: e });
-      setError(errorReason(e));
+      setError(errorMessage(e));
       setDownloadFailed(true);
     } finally {
       setProgress(null);
@@ -115,7 +112,7 @@ export default function AiScreen() {
       setSummarizerDownload(null);
     } catch (e) {
       log.error('summarizer download failed', { error: e });
-      setError(errorReason(e));
+      setError(errorMessage(e));
       setSummarizerDownloadFailed(true);
       setProgress(null);
       return;
@@ -153,7 +150,7 @@ export default function AiScreen() {
       await runSummary(info.selection.text);
     } catch (e) {
       log.error('summarize failed', { error: e });
-      setError(errorReason(e));
+      setError(errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -187,7 +184,7 @@ export default function AiScreen() {
       {availability.data === 'unavailable' && requirements}
       {availability.isError && (
         <Alert className="flex flex-col">
-          <p>{t('ai.failed', [errorReason(availability.error)])}</p>
+          <p>{t('ai.failed', [errorMessage(availability.error)])}</p>
           <Button
             variant="outline"
             size="sm"

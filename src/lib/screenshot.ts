@@ -1,5 +1,6 @@
 import { createLogger } from './logger';
 import { getActiveTab, isRestrictedUrl } from './page';
+import { errorMessage } from '@/lib/errorMessage';
 
 const log = createLogger('screenshot');
 
@@ -16,7 +17,7 @@ export async function captureActiveTab(): Promise<CaptureResult> {
     const dataUrl = await browser.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
     return { ok: true, dataUrl };
   } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error);
+    const reason = errorMessage(error);
     log.warn('capture failed', { error: reason });
     if (/permission/i.test(reason)) return { ok: false, code: 'NO_ACCESS', reason };
     return { ok: false, code: 'FAILED', reason };

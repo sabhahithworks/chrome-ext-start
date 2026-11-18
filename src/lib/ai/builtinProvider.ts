@@ -1,6 +1,7 @@
 import { createLogger } from '@/lib/logger';
 import { truncateText } from '@/lib/text';
 import { AiError, type AiAvailability, type AiProvider } from './types';
+import { errorMessage } from '@/lib/errorMessage';
 
 const log = createLogger('ai');
 
@@ -9,7 +10,7 @@ let summarizerSession: Promise<SummarizerSession> | undefined;
 
 function fail(action: string, error: unknown): AiError {
   if (error instanceof AiError) return error;
-  const message = error instanceof Error ? error.message : String(error);
+  const message = errorMessage(error);
   log.error(`${action} failed`, { message });
   return new AiError('FAILED', message, { cause: error });
 }
@@ -92,7 +93,7 @@ async function* readStream(stream: ReadableStream<string>): AsyncGenerator<strin
     if (!finished)
       await reader.cancel().catch((error: unknown) => {
         log.warn('stream cancel failed', {
-          message: error instanceof Error ? error.message : String(error),
+          message: errorMessage(error),
         });
       });
     reader.releaseLock();

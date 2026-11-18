@@ -16,6 +16,13 @@ export class ApiError extends Error {
   }
 }
 
+const REJECTION_STATUSES: readonly number[] = [400, 401];
+
+/** HTTP 400/401: the server definitely refused the credentials (D16), unlike a transient failure. */
+export function isRejection(e: unknown): e is ApiError {
+  return e instanceof ApiError && e.status !== undefined && REJECTION_STATUSES.includes(e.status);
+}
+
 export function isTransient(e: unknown): boolean {
   if (!(e instanceof ApiError)) return false;
   if (e.code === 'NETWORK' || e.code === 'TIMEOUT') return true;
