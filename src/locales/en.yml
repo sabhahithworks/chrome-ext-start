@@ -37,6 +37,7 @@ auth:
   badCredentials: Email or password is incorrect.
   cancelled: Sign-in was cancelled.
   failed: "Couldn't sign in: $1. Try again."
+  providerPassword: Email and password
 ai:
   unavailable: On-device AI isn't supported in this browser or on this device.
   download: Download on-device model
