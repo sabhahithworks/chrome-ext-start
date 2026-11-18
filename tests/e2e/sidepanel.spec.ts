@@ -30,3 +30,11 @@ test('account menu offers sign in', async ({ page, extensionId }) => {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByLabel('Email')).toBeVisible();
 });
+
+test('ai tab renders a status', async ({ page, extensionId }) => {
+  await openPanel(page, extensionId);
+  await page.getByRole('tab', { name: 'AI' }).click();
+  await expect(
+    page.getByText("On-device AI isn't supported in this browser or on this device."),
+  ).toBeVisible();
+});

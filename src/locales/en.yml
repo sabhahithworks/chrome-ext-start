@@ -14,6 +14,7 @@ common:
   dismiss: Dismiss
 nav:
   home: Home
+  ai: AI
   settings: Settings
 settings:
   theme: Theme
@@ -49,6 +50,12 @@ ai:
   download: Download on-device model
   downloading: Downloading model… $1%
   failed: 'On-device AI failed: $1. Try again.'
+  providerBuiltin: On-device AI
+  send: Send
+  stop: Stop
+  summarize: Summarize this page
+  requirements: See requirements
+  placeholder: Ask the on-device model
 shot:
   capture: Screenshot
   failed: "Couldn't capture this tab: $1. Try again."

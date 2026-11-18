@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import type { ComponentType, LazyExoticComponent } from 'react';
-import { FileText, Home, Settings } from 'lucide-react';
+import { FileText, Home, Settings, Sparkles } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { MessageKey } from '@/lib/i18n';
 import type { ScreenId } from '@/stores/ui';
@@ -26,6 +26,13 @@ export const SCREENS: readonly ScreenDef[] = [
     labelKey: 'page.title',
     icon: FileText,
     component: lazy(() => import('./page/PageScreen')),
+    requiresAuth: false,
+  },
+  {
+    id: 'ai',
+    labelKey: 'nav.ai',
+    icon: Sparkles,
+    component: lazy(() => import('./ai/AiScreen')),
     requiresAuth: false,
   },
   {
