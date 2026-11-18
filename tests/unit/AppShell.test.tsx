@@ -1,0 +1,65 @@
+import { act, cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { Home, Settings } from 'lucide-react';
+import { lazy } from 'react';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { AppShell } from '@/components/AppShell';
+import { APP_NAME } from '@/config/app.config';
+import type { ScreenDef } from '@/features/registry';
+import { useUiStore } from '@/stores/ui';
+
+vi.mock('@/lib/i18n', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { parse } = await import('yaml');
+  const messages = parse(readFileSync('src/locales/en.yml', 'utf8')) as Record<string, unknown>;
+  return {
+    t: (key: string) =>
+      key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], messages),
+  };
+});
+
+const homeDef: ScreenDef = {
+  id: 'home',
+  labelKey: 'nav.home',
+  icon: Home,
+  component: lazy(() => Promise.resolve({ default: () => <p>home body</p> })),
+  requiresAuth: false,
+};
+const settingsDef: ScreenDef = {
+  id: 'settings',
+  labelKey: 'common.retry',
+  icon: Settings,
+  component: lazy(() => Promise.resolve({ default: () => <p>settings body</p> })),
+  requiresAuth: false,
+};
+
+describe('AppShell', () => {
+  afterEach(cleanup);
+
+  beforeEach(() => {
+    act(() => {
+      useUiStore.setState({ activeScreen: 'home' });
+    });
+  });
+
+  test('renders tabs from registry', async () => {
+    render(<AppShell />);
+    const tab = screen.getByRole('tab', { name: 'Home' });
+    expect(tab.getAttribute('aria-selected')).toBe('true');
+    expect(await screen.findByRole('heading', { name: APP_NAME })).toBeTruthy();
+  });
+
+  test('tabs are keyboard navigable', async () => {
+    const user = userEvent.setup();
+    render(<AppShell screens={[homeDef, settingsDef]} />);
+    screen.getByRole('tab', { name: 'Home' }).focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('tab', { name: 'Retry' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tab', { name: 'Home' }).getAttribute('aria-selected')).toBe('false');
+  });
+
+  test('renders no nav for an empty registry', () => {
+    render(<AppShell screens={[]} />);
+    expect(screen.queryByRole('tablist')).toBeNull();
+  });
+});

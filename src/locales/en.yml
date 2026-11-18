@@ -7,6 +7,8 @@ text:
 common:
   retry: Retry
   loading: Loading…
+nav:
+  home: Home
 home:
   connected: Connected to background · v$1
   bgDown: The background service isn't responding. Reload the extension from your browser's extensions page, then reopen this panel.
