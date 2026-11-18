@@ -12,7 +12,7 @@ import { AuthError } from '@/lib/auth/types';
 import type { AuthProvider } from '@/lib/auth/types';
 import { t } from '@/lib/i18n';
 import { createLogger } from '@/lib/logger';
-import { errorMessage } from '@/lib/errorMessage';
+import { reasonText } from '@/lib/errorMessage';
 
 const log = createLogger('LoginForm');
 
@@ -20,10 +20,12 @@ function authErrorMessage(error: unknown): string {
   if (error instanceof AuthError) {
     if (error.code === 'BAD_CREDENTIALS') return t('auth.badCredentials');
     if (error.code === 'CANCELLED') return t('auth.cancelled');
-    return t('auth.failed', [error.message]);
+    // Providers wrap transport errors; show their D35 copy, not the raw "NETWORK /path" message.
+    if (error.cause instanceof ApiError) return apiErrorMessage(error.cause);
+    return t('auth.failed', [reasonText(error)]);
   }
   if (error instanceof ApiError) return apiErrorMessage(error);
-  return t('auth.failed', [errorMessage(error)]);
+  return t('auth.failed', [reasonText(error)]);
 }
 
 export function LoginForm() {

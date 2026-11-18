@@ -10,7 +10,7 @@ import type { AiProvider } from '@/lib/ai/types';
 import { createLogger } from '@/lib/logger';
 import { getPageInfo } from '@/lib/page';
 import type { Truncated } from '@/lib/text';
-import { errorMessage } from '@/lib/errorMessage';
+import { reasonText } from '@/lib/errorMessage';
 
 const log = createLogger('AiScreen');
 
@@ -82,7 +82,7 @@ function AiPanel({ provider }: { provider: AiProvider }) {
     } catch (e) {
       if (!ctl.signal.aborted) {
         log.error('ai request failed', { error: e });
-        setError(errorMessage(e));
+        setError(reasonText(e));
       }
     } finally {
       if (controller.current === ctl) controller.current = null;
@@ -101,7 +101,7 @@ function AiPanel({ provider }: { provider: AiProvider }) {
       await availability.refetch();
     } catch (e) {
       log.error('ai download failed', { error: e });
-      setError(errorMessage(e));
+      setError(reasonText(e));
       setDownloadFailed(true);
     } finally {
       setProgress(null);
@@ -128,7 +128,7 @@ function AiPanel({ provider }: { provider: AiProvider }) {
       setSummarizerDownload(null);
     } catch (e) {
       log.error('summarizer download failed', { error: e });
-      setError(errorMessage(e));
+      setError(reasonText(e));
       setSummarizerDownloadFailed(true);
       setProgress(null);
       return;
@@ -166,7 +166,7 @@ function AiPanel({ provider }: { provider: AiProvider }) {
       await runSummary(info.selection.text);
     } catch (e) {
       log.error('summarize failed', { error: e });
-      setError(errorMessage(e));
+      setError(reasonText(e));
     } finally {
       setBusy(false);
     }
@@ -203,7 +203,7 @@ function AiPanel({ provider }: { provider: AiProvider }) {
       {availability.isError && (
         <Alert>
           <AlertDescription className="gap-2">
-            <p>{t('ai.failed', [errorMessage(availability.error)])}</p>
+            <p>{t('ai.failed', [reasonText(availability.error)])}</p>
             <Button
               variant="outline"
               size="sm"

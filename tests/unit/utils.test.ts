@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { errorMessage } from '@/lib/errorMessage';
+import { errorMessage, reasonText } from '@/lib/errorMessage';
 import { cn } from '@/lib/utils';
 
 test('cn merges conflicting tailwind classes', () => {
@@ -11,4 +11,9 @@ test('errorMessage reads Error messages and stringifies the rest', () => {
   expect(errorMessage(new Error('boom'))).toBe('boom');
   expect(errorMessage('plain')).toBe('plain');
   expect(errorMessage(42)).toBe('42');
+});
+
+test('reasonText drops a trailing period so templates do not double it', () => {
+  expect(reasonText(new Error('Page could not be loaded. '))).toBe('Page could not be loaded');
+  expect(reasonText('no period')).toBe('no period');
 });

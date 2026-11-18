@@ -122,6 +122,35 @@ describe('LoginForm', () => {
     ).toBeTruthy();
   });
 
+  test('shows network copy when the provider wraps the ApiError', async () => {
+    const cause = new ApiError('NETWORK', '/auth/login');
+    const signIn = vi.fn<AuthProvider['signIn']>(() =>
+      Promise.reject(new AuthError('FAILED', cause.message, { cause })),
+    );
+    vi.mocked(enabledProviders).mockReturnValue(makeProviders(signIn));
+    renderForm();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Continue with SSO' }));
+    expect(
+      await screen.findByText("Couldn't reach the server. Check your connection, then Retry."),
+    ).toBeTruthy();
+  });
+
+  test('does not double the period after a reason', async () => {
+    const signIn = vi.fn<AuthProvider['signIn']>(() =>
+      Promise.reject(new AuthError('FAILED', 'Authorization page could not be loaded.')),
+    );
+    vi.mocked(enabledProviders).mockReturnValue(makeProviders(signIn));
+    renderForm();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Continue with SSO' }));
+    expect(
+      await screen.findByText(
+        "Couldn't sign in: Authorization page could not be loaded. Try again.",
+      ),
+    ).toBeTruthy();
+  });
+
   test('renders nothing and warns with no providers', () => {
     vi.mocked(enabledProviders).mockReturnValue([]);
     const { container } = render(

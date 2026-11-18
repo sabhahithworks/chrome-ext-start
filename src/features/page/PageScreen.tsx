@@ -7,6 +7,7 @@ import { formatCount, t } from '@/lib/i18n';
 import { createLogger } from '@/lib/logger';
 import { getPageInfo } from '@/lib/page';
 import { captureActiveTab } from '@/lib/screenshot';
+import { reasonText } from '@/lib/errorMessage';
 import { pendingSelectionItem, readPendingSelection, type PendingSelection } from '@/lib/storage';
 
 const log = createLogger('PageScreen');
@@ -150,7 +151,7 @@ export default function PageScreen() {
       </Button>
       {shot.isError && (
         <Alert>
-          <AlertDescription>{t('shot.failed', [shot.error.message])}</AlertDescription>
+          <AlertDescription>{t('shot.failed', [reasonText(shot.error)])}</AlertDescription>
         </Alert>
       )}
       {shot.data && !shot.data.ok && (
@@ -159,7 +160,7 @@ export default function PageScreen() {
             {shot.data.code === 'RESTRICTED'
               ? t('page.restricted')
               : shot.data.code === 'FAILED'
-                ? t('shot.failed', [shot.data.reason ?? ''])
+                ? t('shot.failed', [reasonText(shot.data.reason ?? '')])
                 : t('page.noAccess')}
           </AlertDescription>
         </Alert>
