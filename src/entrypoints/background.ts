@@ -1,7 +1,8 @@
-import { SYNC_ALARM, ensureSyncAlarm, runAlarmJobs } from '@/background/alarms';
+import { SYNC_ALARM, ensureSyncAlarm, registerAlarmJob, runAlarmJobs } from '@/background/alarms';
 import { getAppInfo } from '@/background/handlers';
 import { handleCommand } from '@/background/commands';
 import { handleMenuClick, setupContextMenu } from '@/background/contextMenu';
+import { refreshIfExpiringBeforeNextAlarm, refreshInBackground } from '@/lib/auth/session';
 import { onMessage } from '@/lib/messaging';
 import { createLogger } from '@/lib/logger';
 
@@ -9,6 +10,8 @@ const log = createLogger('background');
 
 export default defineBackground(() => {
   onMessage('getAppInfo', () => getAppInfo());
+  onMessage('refreshSession', () => refreshInBackground());
+  registerAlarmJob('auth-refresh', refreshIfExpiringBeforeNextAlarm);
 
   browser.contextMenus.onClicked.addListener(handleMenuClick);
   browser.commands.onCommand.addListener(handleCommand);

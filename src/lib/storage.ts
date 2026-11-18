@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AuthProviderIdSchema } from './auth/types';
 import { createLogger } from './logger';
 
 const log = createLogger('storage');
@@ -52,6 +53,55 @@ export async function readPendingSelection(): Promise<PendingSelection | null> {
   const result = PendingSelectionSchema.nullable().safeParse(raw);
   if (!result.success) {
     log.warn('invalid pending selection, ignoring', { issues: result.error.issues });
+    return null;
+  }
+  return result.data;
+}
+
+export const AccessRecordSchema = z.object({
+  accessToken: z.string().min(1),
+  expiresAt: z.number(),
+});
+
+export type AccessRecord = z.infer<typeof AccessRecordSchema>;
+
+export const RefreshRecordSchema = z.object({
+  refreshToken: z.string().min(1),
+  provider: AuthProviderIdSchema,
+});
+
+export type RefreshRecord = z.infer<typeof RefreshRecordSchema>;
+
+export const accessItem = storage.defineItem<AccessRecord | null>('session:auth.access', {
+  fallback: null,
+  version: 1,
+});
+
+export const refreshItem = storage.defineItem<RefreshRecord | null>('local:auth.refresh', {
+  fallback: null,
+  version: 1,
+});
+
+export const sessionExpiredItem = storage.defineItem<boolean>('session:auth.expired', {
+  fallback: false,
+  version: 1,
+});
+
+export async function readAccess(): Promise<AccessRecord | null> {
+  const raw = await accessItem.getValue();
+  const result = AccessRecordSchema.nullable().safeParse(raw);
+  if (!result.success) {
+    log.warn('invalid access record, ignoring', { issues: result.error.issues });
+    return null;
+  }
+  return result.data;
+}
+
+export async function readRefresh(): Promise<RefreshRecord | null> {
+  const raw = await refreshItem.getValue();
+  const result = RefreshRecordSchema.nullable().safeParse(raw);
+  if (!result.success) {
+    log.warn('invalid refresh record, ignoring', { issues: result.error.issues });
     return null;
   }
   return result.data;
