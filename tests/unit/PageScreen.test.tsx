@@ -134,6 +134,8 @@ describe('PageScreen', () => {
     vi.mocked(getPageInfo).mockResolvedValue({ ok: false, code: 'NO_ACCESS' });
     renderPage();
     expect(await screen.findByRole('button', { name: 'Retry' })).toBeTruthy();
+    // Text outside AlertDescription lands in the Alert's 0px grid column.
+    expect(screen.getByText(NO_ACCESS).closest('[data-slot="alert-description"]')).not.toBeNull();
   });
 
   test('restricted has no retry', async () => {

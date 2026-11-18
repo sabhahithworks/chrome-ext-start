@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { t } from '@/lib/i18n';
@@ -56,7 +56,11 @@ export default function SettingsScreen() {
   return (
     <div className="space-y-4 p-4">
       <h1 className="text-lg font-semibold">{t('nav.settings')}</h1>
-      {failed && <Alert variant="destructive">{t('errors.screen')}</Alert>}
+      {failed && (
+        <Alert variant="destructive">
+          <AlertDescription>{t('errors.screen')}</AlertDescription>
+        </Alert>
+      )}
       <div role="group" aria-labelledby="theme-label" className="space-y-2">
         <p id="theme-label" className="text-sm font-medium">
           {t('settings.theme')}

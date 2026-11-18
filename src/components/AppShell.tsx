@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { KeyboardEvent } from 'react';
 import { AccountMenu } from '@/components/AccountMenu';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { Alert } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_NAME } from '@/config/app.config';
@@ -53,11 +53,13 @@ export function AppShell({ screens = SCREENS }: AppShellProps) {
         </div>
       </header>
       {expired && (
-        <Alert className="flex items-center justify-between gap-2 rounded-none border-x-0">
-          <span>{t('auth.expired')}</span>
-          <Button variant="outline" size="sm" onClick={dismissExpired}>
-            {t('common.dismiss')}
-          </Button>
+        <Alert className="rounded-none border-x-0">
+          <AlertDescription className="flex w-full items-center justify-between gap-2">
+            <span>{t('auth.expired')}</span>
+            <Button variant="outline" size="sm" onClick={dismissExpired}>
+              {t('common.dismiss')}
+            </Button>
+          </AlertDescription>
         </Alert>
       )}
       <main className="flex-1 overflow-y-auto">

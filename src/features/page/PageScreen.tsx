@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Alert } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCount, t } from '@/lib/i18n';
@@ -100,16 +100,24 @@ export default function PageScreen() {
       )}
       {isPending && <Skeleton className="h-16" />}
       {isError && (
-        <Alert className="flex-col">
-          <p>{t('page.noAccess')}</p>
-          {retry}
+        <Alert>
+          <AlertDescription className="gap-2">
+            <p>{t('page.noAccess')}</p>
+            {retry}
+          </AlertDescription>
         </Alert>
       )}
-      {data && !data.ok && data.code === 'RESTRICTED' && <Alert>{t('page.restricted')}</Alert>}
+      {data && !data.ok && data.code === 'RESTRICTED' && (
+        <Alert>
+          <AlertDescription>{t('page.restricted')}</AlertDescription>
+        </Alert>
+      )}
       {data && !data.ok && data.code !== 'RESTRICTED' && (
-        <Alert className="flex-col">
-          <p>{t('page.noAccess')}</p>
-          {retry}
+        <Alert>
+          <AlertDescription className="gap-2">
+            <p>{t('page.noAccess')}</p>
+            {retry}
+          </AlertDescription>
         </Alert>
       )}
       {data?.ok && (
@@ -140,14 +148,20 @@ export default function PageScreen() {
       >
         {t('shot.capture')}
       </Button>
-      {shot.isError && <Alert>{t('shot.failed', [shot.error.message])}</Alert>}
+      {shot.isError && (
+        <Alert>
+          <AlertDescription>{t('shot.failed', [shot.error.message])}</AlertDescription>
+        </Alert>
+      )}
       {shot.data && !shot.data.ok && (
         <Alert>
-          {shot.data.code === 'RESTRICTED'
-            ? t('page.restricted')
-            : shot.data.code === 'FAILED'
-              ? t('shot.failed', [shot.data.reason ?? ''])
-              : t('page.noAccess')}
+          <AlertDescription>
+            {shot.data.code === 'RESTRICTED'
+              ? t('page.restricted')
+              : shot.data.code === 'FAILED'
+                ? t('shot.failed', [shot.data.reason ?? ''])
+                : t('page.noAccess')}
+          </AlertDescription>
         </Alert>
       )}
       {shot.data?.ok && (

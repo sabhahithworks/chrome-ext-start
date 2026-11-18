@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Alert } from '@/components/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,7 +24,9 @@ export default function AiScreen() {
   if (!provider) {
     return (
       <div className="space-y-4 p-4">
-        <Alert>{t('ai.unavailable')}</Alert>
+        <Alert>
+          <AlertDescription>{t('ai.unavailable')}</AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -184,11 +186,13 @@ function AiPanel({ provider }: { provider: AiProvider }) {
   );
 
   const requirements = (
-    <Alert className="flex flex-col">
-      <p>{t('ai.unavailable')}</p>
-      <a className="underline" href={REQUIREMENTS_URL} target="_blank" rel="noreferrer">
-        {t('ai.requirements')}
-      </a>
+    <Alert>
+      <AlertDescription className="gap-2">
+        <p>{t('ai.unavailable')}</p>
+        <a className="underline" href={REQUIREMENTS_URL} target="_blank" rel="noreferrer">
+          {t('ai.requirements')}
+        </a>
+      </AlertDescription>
     </Alert>
   );
 
@@ -197,17 +201,19 @@ function AiPanel({ provider }: { provider: AiProvider }) {
       <h1 className="text-lg font-semibold">{t(provider.labelKey)}</h1>
       {availability.data === 'unavailable' && requirements}
       {availability.isError && (
-        <Alert className="flex flex-col">
-          <p>{t('ai.failed', [errorMessage(availability.error)])}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void availability.refetch();
-            }}
-          >
-            {t('common.retry')}
-          </Button>
+        <Alert>
+          <AlertDescription className="gap-2">
+            <p>{t('ai.failed', [errorMessage(availability.error)])}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void availability.refetch();
+              }}
+            >
+              {t('common.retry')}
+            </Button>
+          </AlertDescription>
         </Alert>
       )}
       {(availability.data === 'downloadable' || availability.data === 'downloading') && (
@@ -272,19 +278,25 @@ function AiPanel({ provider }: { provider: AiProvider }) {
             </div>
           )}
           {summarizerUnavailable && requirements}
-          {pageProblem === 'RESTRICTED' && <Alert>{t('page.restricted')}</Alert>}
+          {pageProblem === 'RESTRICTED' && (
+            <Alert>
+              <AlertDescription>{t('page.restricted')}</AlertDescription>
+            </Alert>
+          )}
           {pageProblem === 'NO_ACCESS' && (
-            <Alert className="flex flex-col">
-              <p>{t('page.noAccess')}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  void summarize();
-                }}
-              >
-                {t('common.retry')}
-              </Button>
+            <Alert>
+              <AlertDescription className="gap-2">
+                <p>{t('page.noAccess')}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void summarize();
+                  }}
+                >
+                  {t('common.retry')}
+                </Button>
+              </AlertDescription>
             </Alert>
           )}
           {noSelection && <p className="text-sm">{t('page.noSelection')}</p>}
@@ -293,14 +305,20 @@ function AiPanel({ provider }: { provider: AiProvider }) {
               {t('text.truncated', [formatCount(truncation.shown), formatCount(truncation.total)])}
             </p>
           )}
-          {error !== null && <Alert>{t('ai.failed', [error])}</Alert>}
+          {error !== null && (
+            <Alert>
+              <AlertDescription>{t('ai.failed', [error])}</AlertDescription>
+            </Alert>
+          )}
           <div aria-live="polite" className="text-sm break-words whitespace-pre-wrap">
             {output}
           </div>
         </div>
       )}
       {error !== null && availability.data !== 'available' && (
-        <Alert>{t('ai.failed', [error])}</Alert>
+        <Alert>
+          <AlertDescription>{t('ai.failed', [error])}</AlertDescription>
+        </Alert>
       )}
     </div>
   );
