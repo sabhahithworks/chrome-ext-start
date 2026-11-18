@@ -15,6 +15,7 @@ export default defineConfig({
     default_locale: 'en',
     description: 'A production-grade side panel extension starter.',
     minimum_chrome_version: '116',
+    permissions: ['storage'],
     action: {},
   },
 });

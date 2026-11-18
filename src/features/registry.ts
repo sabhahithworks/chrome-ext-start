@@ -1,6 +1,6 @@
 import { lazy } from 'react';
 import type { ComponentType, LazyExoticComponent } from 'react';
-import { Home } from 'lucide-react';
+import { Home, Settings } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { MessageKey } from '@/lib/i18n';
 import type { ScreenId } from '@/stores/ui';
@@ -19,6 +19,13 @@ export const SCREENS: readonly ScreenDef[] = [
     labelKey: 'nav.home',
     icon: Home,
     component: lazy(() => import('./home/HomeScreen')),
+    requiresAuth: false,
+  },
+  {
+    id: 'settings',
+    labelKey: 'nav.settings',
+    icon: Settings,
+    component: lazy(() => import('./settings/SettingsScreen')),
     requiresAuth: false,
   },
 ];

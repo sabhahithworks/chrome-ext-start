@@ -9,6 +9,12 @@ common:
   loading: Loading…
 nav:
   home: Home
+  settings: Settings
+settings:
+  theme: Theme
+  themeSystem: System
+  themeLight: Light
+  themeDark: Dark
 home:
   connected: Connected to background · v$1
   bgDown: The background service isn't responding. Reload the extension from your browser's extensions page, then reopen this panel.

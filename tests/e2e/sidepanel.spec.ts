@@ -14,3 +14,13 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await expect(page.getByText('Connected to background · v0.1.0')).toBeVisible();
   });
 }
+
+test('dark theme persists across reload', async ({ page, extensionId }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await openPanel(page, extensionId);
+  await page.getByRole('tab', { name: 'Settings' }).click();
+  await page.getByRole('radio', { name: 'Dark' }).click();
+  await expect(page.locator('html')).toHaveClass(/dark/);
+  await page.reload();
+  await expect(page.locator('html')).toHaveClass(/dark/);
+});
