@@ -130,7 +130,7 @@ CI checks run from `.github/workflows/ci.yml`.
 
 ## Troubleshooting
 
-**The Page tab says it cannot access the page.** The panel can read a page only after you act on it (click the toolbar icon, use the shortcut or use the context menu on that tab), because the extension relies on `activeTab`. Act on the tab, then press Retry.
+**The Page tab says it cannot access the page.** The panel can read a page only after you act on it (click the toolbar icon, use the shortcut or use the context menu on that tab), because the extension relies on `activeTab`. The shortcut and the context menu refresh the Page tab by themselves; after a toolbar-icon click, press Retry. Switching tabs re-reads the new tab, which shows this message again until you act on it. Page info reads the top frame only, so text selected inside an embedded frame shows as "No text selected" (the context menu still sends it).
 
 **The Page tab says the page is restricted.** Browser pages (`chrome://`, `edge://`, `about:`, `view-source:`, `devtools://`, `chrome-extension://`) and the Chrome and Edge web stores cannot be read by any extension. There is no Retry on these. The list is `RESTRICTED_URL_PREFIXES` in `src/config/app.config.ts`.
 

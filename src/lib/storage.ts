@@ -48,6 +48,15 @@ export const pendingSelectionItem = storage.defineItem<PendingSelection | null>(
   { fallback: null, version: 1 },
 );
 
+/**
+ * When the shortcut last granted activeTab. The panel only watches it as a "re-read the page"
+ * signal and never reads the value, so it needs no schema.
+ */
+export const accessGrantItem = storage.defineItem<number | null>('session:accessGrant', {
+  fallback: null,
+  version: 1,
+});
+
 export async function readPendingSelection(): Promise<PendingSelection | null> {
   const raw = await pendingSelectionItem.getValue();
   const result = PendingSelectionSchema.nullable().safeParse(raw);

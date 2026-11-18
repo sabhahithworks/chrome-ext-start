@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import PageScreen from '@/features/page/PageScreen';
 import { getPageInfo } from '@/lib/page';
-import { pendingSelectionItem } from '@/lib/storage';
+import { accessGrantItem, pendingSelectionItem } from '@/lib/storage';
 import { captureActiveTab } from '@/lib/screenshot';
 
 vi.mock('@/lib/page');
@@ -19,7 +19,20 @@ vi.mock('@/lib/storage', () => {
     });
     return Promise.resolve();
   });
+  const grantWatchers = new Set<(v: unknown) => void>();
   return {
+    accessGrantItem: {
+      setValue: (v: unknown) => {
+        grantWatchers.forEach((w) => {
+          w(v);
+        });
+        return Promise.resolve();
+      },
+      watch: (cb: (v: unknown) => void) => {
+        grantWatchers.add(cb);
+        return () => grantWatchers.delete(cb);
+      },
+    },
     pendingSelectionItem: {
       setValue: setValueMock,
       watch: (cb: (v: unknown) => void) => {
@@ -113,6 +126,33 @@ describe('PageScreen', () => {
     expect(await screen.findByText('second tab')).toBeTruthy();
     expect(screen.getByText('Second')).toBeTruthy();
     expect(screen.queryByText('first tab')).toBeNull();
+  });
+
+  test('re-reads the page after Alt+Shift+S grants access', async () => {
+    vi.mocked(getPageInfo)
+      .mockResolvedValueOnce({ ok: false, code: 'NO_ACCESS' })
+      .mockResolvedValueOnce(okInfo('granted'));
+    renderPage();
+    expect(await screen.findByText(NO_ACCESS)).toBeTruthy();
+    await accessGrantItem.setValue(Date.now());
+    expect(await screen.findByText('granted')).toBeTruthy();
+    expect(screen.queryByText(NO_ACCESS)).toBeNull();
+  });
+
+  test('re-reads the page when a selection is sent', async () => {
+    vi.mocked(getPageInfo)
+      .mockResolvedValueOnce({ ok: false, code: 'NO_ACCESS' })
+      .mockResolvedValueOnce(okInfo('after menu'));
+    renderPage();
+    expect(await screen.findByText(NO_ACCESS)).toBeTruthy();
+    await pendingSelectionItem.setValue({
+      text: 'picked',
+      shown: 6,
+      total: 6,
+      truncated: false,
+      createdAt: Date.now(),
+    });
+    expect(await screen.findByText('after menu')).toBeTruthy();
   });
 
   test('shows no-selection note', async () => {

@@ -8,7 +8,12 @@ import { createLogger } from '@/lib/logger';
 import { getPageInfo } from '@/lib/page';
 import { captureActiveTab } from '@/lib/screenshot';
 import { reasonText } from '@/lib/errorMessage';
-import { pendingSelectionItem, readPendingSelection, type PendingSelection } from '@/lib/storage';
+import {
+  accessGrantItem,
+  pendingSelectionItem,
+  readPendingSelection,
+  type PendingSelection,
+} from '@/lib/storage';
 
 const log = createLogger('PageScreen');
 
@@ -29,9 +34,14 @@ export default function PageScreen() {
     };
     browser.tabs.onActivated.addListener(reload);
     browser.tabs.onUpdated.addListener(onUpdated);
+    // The shortcut and the context menu grant activeTab, so re-read without waiting for Retry.
+    const unwatchGrant = accessGrantItem.watch(reload);
+    const unwatchSelection = pendingSelectionItem.watch(reload);
     return () => {
       browser.tabs.onActivated.removeListener(reload);
       browser.tabs.onUpdated.removeListener(onUpdated);
+      unwatchGrant();
+      unwatchSelection();
     };
   }, [refetch]);
 
