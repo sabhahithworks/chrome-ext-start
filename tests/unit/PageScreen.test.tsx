@@ -160,6 +160,14 @@ describe('PageScreen', () => {
     expect(document.querySelector('b')).toBeNull();
   });
 
+  test('labels page info rows', async () => {
+    vi.mocked(getPageInfo).mockResolvedValue(okInfo('x'));
+    renderPage();
+    await screen.findByText('Example');
+    const labels = [...document.querySelectorAll('dt')].map((dt) => dt.textContent);
+    expect(labels).toEqual(['Title', 'URL', 'Selected text']);
+  });
+
   test('shows failed capture message', async () => {
     vi.mocked(getPageInfo).mockResolvedValue(okInfo(''));
     vi.mocked(captureActiveTab).mockResolvedValue({ ok: false, code: 'FAILED', reason: 'boom' });

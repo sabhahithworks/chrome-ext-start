@@ -122,7 +122,7 @@ export default function PageScreen() {
       )}
       {data?.ok && (
         <dl className="space-y-2 text-sm">
-          <dt className="font-medium">{t('page.title')}</dt>
+          <dt className="font-medium">{t('page.pageTitle')}</dt>
           <dd className="break-words">{data.title}</dd>
           <dt className="font-medium">{t('page.url')}</dt>
           <dd className="break-all">{data.url}</dd>

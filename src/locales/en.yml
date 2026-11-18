@@ -1,5 +1,6 @@
 page:
   title: Page
+  pageTitle: Title
   url: URL
   selection: Selected text
   noAccess: Can't access this page yet. Click the extension icon or press Alt+Shift+S, then Retry. Browser pages like settings or the extension store can't be read.
