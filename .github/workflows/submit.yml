@@ -12,7 +12,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
       - name: Check Chrome Web Store secrets
         run: |
           for name in CHROME_EXTENSION_ID CHROME_CLIENT_ID CHROME_CLIENT_SECRET CHROME_REFRESH_TOKEN; do
@@ -41,6 +40,8 @@ jobs:
           WXT_OAUTH_TOKEN_URL: ${{ vars.WXT_OAUTH_TOKEN_URL }}
           WXT_OAUTH_CLIENT_ID: ${{ vars.WXT_OAUTH_CLIENT_ID }}
           WXT_OAUTH_SCOPES: ${{ vars.WXT_OAUTH_SCOPES }}
+      # After .env: postinstall runs `wxt prepare`, which validates the env.
+      - run: pnpm install --frozen-lockfile
       - run: pnpm zip
       - name: Submit to Chrome Web Store
         run: pnpm wxt submit --chrome-zip .output/*-chrome.zip

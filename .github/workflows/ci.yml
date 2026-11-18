@@ -16,8 +16,9 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      # postinstall runs `wxt prepare`, which loads wxt.config.ts and validates the env, so .env comes first.
       - run: cp .env.example .env
+      - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm format:check
