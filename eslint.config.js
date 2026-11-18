@@ -37,5 +37,9 @@ export default tseslint.config(
     files: ['**/*.js'],
     extends: [tseslint.configs.disableTypeChecked],
   },
+  {
+    files: ['tests/**'],
+    languageOptions: { globals: { ...globals.node } },
+  },
   prettier,
 );
