@@ -12,7 +12,9 @@ const provider = vi.hoisted(() => ({
   summarizerAvailability: vi.fn<() => Promise<string>>(),
   prepareSummarizer: vi.fn<(onProgress: (f: number) => void) => Promise<void>>(),
 }));
+const enabledAiProviders = vi.hoisted(() => vi.fn(() => [provider]));
 vi.mock('@/lib/ai/builtinProvider', () => ({ builtinProvider: provider }));
+vi.mock('@/lib/ai/providers', () => ({ enabledAiProviders }));
 vi.mock('@/lib/page', () => ({ getPageInfo: vi.fn() }));
 
 vi.mock('@/lib/i18n', async () => {
@@ -49,6 +51,16 @@ describe('AiScreen', () => {
     vi.clearAllMocks();
   });
   afterEach(cleanup);
+
+  test('shows unavailable when AI_PROVIDERS turns every provider off', () => {
+    enabledAiProviders.mockReturnValueOnce([]);
+    renderScreen();
+    expect(
+      screen.getByText("On-device AI isn't supported in this browser or on this device."),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Send' })).toBeNull();
+    expect(provider.availability).not.toHaveBeenCalled();
+  });
 
   test('disables send for blank prompt', async () => {
     provider.availability.mockResolvedValue('available');

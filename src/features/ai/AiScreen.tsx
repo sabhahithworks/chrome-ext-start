@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { formatCount, t } from '@/lib/i18n';
-import { builtinProvider as provider } from '@/lib/ai/builtinProvider';
+import { enabledAiProviders } from '@/lib/ai/providers';
+import type { AiProvider } from '@/lib/ai/types';
 import { createLogger } from '@/lib/logger';
 import { getPageInfo } from '@/lib/page';
 import type { Truncated } from '@/lib/text';
@@ -18,6 +19,19 @@ const REQUIREMENTS_URL = 'https://developer.chrome.com/docs/ai/get-started';
 type PageProblem = 'RESTRICTED' | 'NO_ACCESS';
 
 export default function AiScreen() {
+  // D11: AI_PROVIDERS decides which providers exist; the first enabled one backs this screen.
+  const [provider] = enabledAiProviders();
+  if (!provider) {
+    return (
+      <div className="space-y-4 p-4">
+        <Alert>{t('ai.unavailable')}</Alert>
+      </div>
+    );
+  }
+  return <AiPanel provider={provider} />;
+}
+
+function AiPanel({ provider }: { provider: AiProvider }) {
   const availability = useQuery({
     queryKey: ['aiAvailability'],
     queryFn: () => provider.availability(),
