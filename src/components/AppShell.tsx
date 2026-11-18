@@ -1,10 +1,12 @@
 import { Suspense } from 'react';
 import type { KeyboardEvent } from 'react';
+import { AccountMenu } from '@/components/AccountMenu';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_NAME } from '@/config/app.config';
+import { LoginForm } from '@/features/auth/LoginForm';
 import { RequireAuth } from '@/features/auth/RequireAuth';
 import { useSession } from '@/features/auth/useSession';
 import { SCREENS } from '@/features/registry';
@@ -46,7 +48,9 @@ export function AppShell({ screens = SCREENS }: AppShellProps) {
     <div className="bg-background text-foreground flex h-screen flex-col">
       <header className="flex items-center justify-between border-b px-4 py-2">
         <span className="text-sm font-semibold">{APP_NAME}</span>
-        <div data-slot="header-actions" />
+        <div data-slot="header-actions">
+          <AccountMenu />
+        </div>
       </header>
       {expired && (
         <Alert className="flex items-center justify-between gap-2 rounded-none border-x-0">
@@ -60,7 +64,11 @@ export function AppShell({ screens = SCREENS }: AppShellProps) {
         {Screen && (
           <ErrorBoundary key={active.id}>
             <Suspense fallback={<Skeleton className="m-4 h-24" />}>
-              {active.requiresAuth ? <RequireAuth>{body}</RequireAuth> : body}
+              {active.requiresAuth ? (
+                <RequireAuth fallback={<LoginForm />}>{body}</RequireAuth>
+              ) : (
+                body
+              )}
             </Suspense>
           </ErrorBoundary>
         )}

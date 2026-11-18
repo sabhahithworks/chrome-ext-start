@@ -37,6 +37,11 @@ auth:
   badCredentials: Email or password is incorrect.
   cancelled: Sign-in was cancelled.
   failed: "Couldn't sign in: $1. Try again."
+  email: Email
+  password: Password
+  signIn: Sign in
+  sso: Continue with SSO
+  signOut: Sign out
   providerPassword: Email and password
   providerOauth: Single sign-on
 ai:

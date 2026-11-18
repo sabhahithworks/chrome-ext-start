@@ -24,3 +24,9 @@ test('dark theme persists across reload', async ({ page, extensionId }) => {
   await page.reload();
   await expect(page.locator('html')).toHaveClass(/dark/);
 });
+
+test('account menu offers sign in', async ({ page, extensionId }) => {
+  await openPanel(page, extensionId);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.getByLabel('Email')).toBeVisible();
+});
