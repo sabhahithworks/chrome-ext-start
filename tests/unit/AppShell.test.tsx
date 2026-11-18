@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Home, Settings } from 'lucide-react';
-import { lazy } from 'react';
+import { lazy, type ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { AppShell } from '@/components/AppShell';
 import { APP_NAME } from '@/config/app.config';
@@ -34,6 +34,16 @@ const settingsDef: ScreenDef = {
   component: lazy(() => Promise.resolve({ default: () => <p>settings body</p> })),
   requiresAuth: false,
 };
+
+function renderWithQuery(ui: ReactElement) {
+  return render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      {ui}
+    </QueryClientProvider>,
+  );
+}
 
 describe('AppShell', () => {
   afterEach(cleanup);
@@ -85,14 +95,14 @@ describe('AppShell', () => {
 
   test('gates a requiresAuth screen when signed out', async () => {
     await refreshItem.setValue(null);
-    render(<AppShell screens={[{ ...homeDef, requiresAuth: true }]} />);
+    renderWithQuery(<AppShell screens={[{ ...homeDef, requiresAuth: true }]} />);
     expect(await screen.findByText('Sign in to use this.')).toBeTruthy();
     expect(screen.queryByText('home body')).toBeNull();
   });
 
   test('renders a requiresAuth screen when signed in', async () => {
     await refreshItem.setValue({ refreshToken: 'r', provider: 'password' });
-    render(<AppShell screens={[{ ...homeDef, requiresAuth: true }]} />);
+    renderWithQuery(<AppShell screens={[{ ...homeDef, requiresAuth: true }]} />);
     expect(await screen.findByText('home body')).toBeTruthy();
     await refreshItem.setValue(null);
   });
