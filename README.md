@@ -91,16 +91,17 @@ Alt+Shift+S opens the side panel. Change it at `chrome://extensions/shortcuts`.
 
 ## Permissions
 
-| Permission         | Why                                                                                                                      |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `storage`          | Settings, tokens and the pending selection                                                                               |
-| `activeTab`        | Read the current page after a user action (page info, screenshot)                                                        |
-| `scripting`        | Run the page reader in the active tab                                                                                    |
-| `contextMenus`     | The "send selection" menu entry                                                                                          |
-| `alarms`           | Periodic sync and token refresh                                                                                          |
-| `identity`         | OAuth sign-in through `browser.identity`                                                                                 |
-| `sidePanel`        | Show the extension in the browser side panel (added by WXT for the side panel entrypoint, not listed in `wxt.config.ts`) |
-| `host_permissions` | The origins of `WXT_API_BASE_URL` and `WXT_OAUTH_TOKEN_URL`, as `<origin>/*`                                             |
+| Permission              | Why                                                                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`               | Settings, tokens and the pending selection                                                                                             |
+| `activeTab`             | Read the current page after a user action (page info, screenshot)                                                                      |
+| `scripting`             | Run the page reader in the active tab                                                                                                  |
+| `contextMenus`          | The "send selection" menu entry                                                                                                        |
+| `alarms`                | Periodic sync and token refresh                                                                                                        |
+| `identity`              | OAuth sign-in through `browser.identity`                                                                                               |
+| `sidePanel`             | Show the extension in the browser side panel (added by WXT for the side panel entrypoint, not listed in `wxt.config.ts`)               |
+| `<all_urls>` (optional) | Asked for only when the user presses **Allow on all sites** on the Page tab, so every tab is read on switch. Not requested at install. |
+| `host_permissions`      | The origins of `WXT_API_BASE_URL` and `WXT_OAUTH_TOKEN_URL`, as `<origin>/*`                                                           |
 
 ## Release
 
@@ -130,7 +131,7 @@ CI checks run from `.github/workflows/ci.yml`.
 
 ## Troubleshooting
 
-**The Page tab says it cannot access the page.** The panel can read a page only after you act on it (click the toolbar icon, use the shortcut or use the context menu on that tab), because the extension relies on `activeTab`. The shortcut and the context menu refresh the Page tab by themselves; after a toolbar-icon click, press Retry. Switching tabs re-reads the new tab, which shows this message again until you act on it. Page info reads the top frame only, so text selected inside an embedded frame shows as "No text selected" (the context menu still sends it).
+**The Page tab says it cannot access the page.** The panel can read a page only after you act on it (click the toolbar icon, use the shortcut or use the context menu on that tab), because the extension relies on `activeTab`. The shortcut and the context menu refresh the Page tab by themselves; after a toolbar-icon click, press Retry. Switching tabs re-reads the new tab, which shows this message again until you act on it, unless you pressed **Allow on all sites**: then every tab is read on switch. To take that access back, open the extension's details page in `chrome://extensions` and change **Site access**. Page info reads the top frame only, so text selected inside an embedded frame shows as "No text selected" (the context menu still sends it).
 
 **The Page tab says the page is restricted.** Browser pages (`chrome://`, `edge://`, `about:`, `view-source:`, `devtools://`, `chrome-extension://`) and the Chrome and Edge web stores cannot be read by any extension. There is no Retry on these. The list is `RESTRICTED_URL_PREFIXES` in `src/config/app.config.ts`.
 

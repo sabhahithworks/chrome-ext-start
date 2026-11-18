@@ -14,6 +14,9 @@ export const LIMITS = {
   DEFAULT_TOKEN_TTL_SEC: 3600,
 } as const;
 
+/** Optional host access the user can grant from the Page tab so every tab is read on switch (D-q8). */
+export const ALL_SITES_ORIGINS: readonly string[] = ['<all_urls>'];
+
 export const RESTRICTED_URL_PREFIXES: readonly string[] = [
   'chrome://',
   'edge://',

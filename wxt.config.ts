@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import { loadEnv } from 'vite';
 import { defineConfig } from 'wxt';
-import { APP_NAME } from './src/config/app.config';
+import { ALL_SITES_ORIGINS, APP_NAME } from './src/config/app.config';
 import { parseEnv } from './src/lib/env';
 
 export const env = parseEnv(loadEnv(process.env.NODE_ENV ?? 'development', process.cwd(), 'WXT_'));
@@ -22,6 +22,7 @@ export default defineConfig({
         ...(env.WXT_OAUTH_TOKEN_URL ? [new URL(env.WXT_OAUTH_TOKEN_URL).origin + '/*'] : []),
       ]),
     ],
+    optional_host_permissions: [...ALL_SITES_ORIGINS],
     action: {},
     commands: {
       'open-side-panel': {

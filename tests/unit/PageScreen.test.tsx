@@ -6,6 +6,7 @@ import PageScreen from '@/features/page/PageScreen';
 import { getPageInfo } from '@/lib/page';
 import { accessGrantItem, pendingSelectionItem } from '@/lib/storage';
 import { captureActiveTab } from '@/lib/screenshot';
+import { hasAllSitesAccess, requestAllSitesAccess } from '@/lib/siteAccess';
 
 vi.mock('@/lib/page');
 const setValueMock = vi.hoisted(() => vi.fn<(v: unknown) => Promise<void>>());
@@ -44,6 +45,15 @@ vi.mock('@/lib/storage', () => {
   };
 });
 vi.mock('@/lib/screenshot', () => ({ captureActiveTab: vi.fn() }));
+const siteAccessWatchers = vi.hoisted(() => new Set<() => void>());
+vi.mock('@/lib/siteAccess', () => ({
+  hasAllSitesAccess: vi.fn(() => Promise.resolve(false)),
+  requestAllSitesAccess: vi.fn(() => Promise.resolve(false)),
+  watchSiteAccess: (cb: () => void) => {
+    siteAccessWatchers.add(cb);
+    return () => siteAccessWatchers.delete(cb);
+  },
+}));
 
 vi.mock('@/lib/i18n', async () => {
   const { readFileSync } = await import('node:fs');
@@ -153,6 +163,50 @@ describe('PageScreen', () => {
       createdAt: Date.now(),
     });
     expect(await screen.findByText('after menu')).toBeTruthy();
+  });
+
+  test('allow on all sites requests access and re-reads the page', async () => {
+    vi.mocked(hasAllSitesAccess).mockResolvedValue(false);
+    vi.mocked(requestAllSitesAccess).mockResolvedValueOnce(true);
+    vi.mocked(getPageInfo)
+      .mockResolvedValueOnce({ ok: false, code: 'NO_ACCESS' })
+      .mockResolvedValueOnce(okInfo('now readable'));
+    renderPage();
+    fireEvent.click(await screen.findByRole('button', { name: 'Allow on all sites' }));
+    expect(await screen.findByText('now readable')).toBeTruthy();
+    expect(requestAllSitesAccess).toHaveBeenCalledTimes(1);
+  });
+
+  test('hides allow on all sites once access is granted', async () => {
+    vi.mocked(hasAllSitesAccess).mockResolvedValue(true);
+    vi.mocked(getPageInfo).mockResolvedValue({ ok: false, code: 'NO_ACCESS' });
+    renderPage();
+    expect(await screen.findByRole('button', { name: 'Retry' })).toBeTruthy();
+    await waitFor(() => {
+      expect(hasAllSitesAccess).toHaveBeenCalled();
+    });
+    expect(screen.queryByRole('button', { name: 'Allow on all sites' })).toBeNull();
+  });
+
+  test('restricted page offers no site access button', async () => {
+    vi.mocked(getPageInfo).mockResolvedValue({ ok: false, code: 'RESTRICTED' });
+    renderPage();
+    expect(
+      await screen.findByText("Your browser doesn't allow extensions on this page."),
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Allow on all sites' })).toBeNull();
+  });
+
+  test('re-reads the page when site access changes', async () => {
+    vi.mocked(getPageInfo)
+      .mockResolvedValueOnce({ ok: false, code: 'NO_ACCESS' })
+      .mockResolvedValueOnce(okInfo('granted elsewhere'));
+    renderPage();
+    expect(await screen.findByText(NO_ACCESS)).toBeTruthy();
+    siteAccessWatchers.forEach((cb) => {
+      cb();
+    });
+    expect(await screen.findByText('granted elsewhere')).toBeTruthy();
   });
 
   test('shows no-selection note', async () => {

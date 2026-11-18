@@ -7,6 +7,7 @@ import { formatCount, t } from '@/lib/i18n';
 import { createLogger } from '@/lib/logger';
 import { getPageInfo } from '@/lib/page';
 import { captureActiveTab } from '@/lib/screenshot';
+import { hasAllSitesAccess, requestAllSitesAccess, watchSiteAccess } from '@/lib/siteAccess';
 import { reasonText } from '@/lib/errorMessage';
 import {
   accessGrantItem,
@@ -23,6 +24,21 @@ export default function PageScreen() {
     queryFn: getPageInfo,
   });
   const [sent, setSent] = useState<PendingSelection | null>(null);
+  const { data: hasSiteAccess, refetch: refetchSiteAccess } = useQuery({
+    queryKey: ['siteAccess'],
+    queryFn: hasAllSitesAccess,
+  });
+  const [allowError, setAllowError] = useState<string | null>(null);
+
+  // D-q8: a grant or removal (here or on the extension's details page) changes what can be read.
+  useEffect(
+    () =>
+      watchSiteAccess(() => {
+        void refetchSiteAccess();
+        void refetch();
+      }),
+    [refetchSiteAccess, refetch],
+  );
 
   // The panel stays open across tab switches, so re-read the page whenever the active tab changes.
   useEffect(() => {
@@ -77,16 +93,44 @@ export default function PageScreen() {
 
   const shot = useMutation({ mutationFn: captureActiveTab });
 
-  const retry = (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => {
+  const allowAllSites = () => {
+    setAllowError(null);
+    // Called straight from the click so Chrome sees the user gesture it needs for the prompt.
+    requestAllSitesAccess()
+      .then((granted) => {
+        if (!granted) {
+          log.info('all-sites access declined');
+          return;
+        }
+        void refetchSiteAccess();
         void refetch();
-      }}
-    >
-      {t('common.retry')}
-    </Button>
+      })
+      .catch((error: unknown) => {
+        log.error('all-sites access request failed', { error });
+        setAllowError(reasonText(error));
+      });
+  };
+
+  const retry = (
+    <>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            void refetch();
+          }}
+        >
+          {t('common.retry')}
+        </Button>
+        {hasSiteAccess === false && (
+          <Button size="sm" onClick={allowAllSites}>
+            {t('page.allowAllSites')}
+          </Button>
+        )}
+      </div>
+      {allowError !== null && <p>{t('page.allowFailed', [allowError])}</p>}
+    </>
   );
 
   return (
