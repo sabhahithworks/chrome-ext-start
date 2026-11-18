@@ -9,6 +9,8 @@ const log = createLogger('api');
 export interface AuthHooks {
   getAccessToken(): Promise<string | null>;
   refresh(): Promise<boolean>;
+  /** Read after a failed refresh: still signed in means the failure was transient (D16). */
+  isSignedIn(): Promise<boolean>;
   onSessionExpired(): void;
 }
 
@@ -85,9 +87,16 @@ export function createApiClient(opts: ApiClientOptions): ApiClient {
     async request<T>(path: string, init: RequestInitOptions<T>): Promise<T> {
       let res = await send(path, init);
       if (res.status === 401 && init.auth && auth) {
-        const refreshed = await auth.refresh();
-        if (refreshed) res = await send(path, init);
-        if (!refreshed || res.status === 401) {
+        if (!(await auth.refresh())) {
+          // A definite rejection already signed out in the background; a transient one kept the tokens.
+          if (await auth.isSignedIn()) {
+            log.warn('token refresh failed transiently', { path });
+            throw new ApiError('NETWORK', path);
+          }
+          throw new ApiError('UNAUTHORIZED', path, 401);
+        }
+        res = await send(path, init);
+        if (res.status === 401) {
           auth.onSessionExpired();
           throw new ApiError('UNAUTHORIZED', path, 401);
         }

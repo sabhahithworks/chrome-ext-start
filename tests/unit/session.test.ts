@@ -3,6 +3,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { ApiError } from '@/lib/api/errors';
 import {
+  authHooks,
   getAccessToken,
   isBackgroundContext,
   refresh,
@@ -176,6 +177,45 @@ describe('auth session', () => {
     vi.mocked(sendMessage).mockRejectedValue(new Error('no receiver'));
     expect(await refresh()).toBe(false);
     expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  test('sign-out during a refresh is not undone', async () => {
+    await seed(10 * SEC);
+    refreshMock.mockImplementation(async () => {
+      await signOut();
+      return nextTokens();
+    });
+    expect(await refreshInBackground()).toBe(false);
+    expect(await readAccess()).toBeNull();
+    expect(await readRefresh()).toBeNull();
+  });
+
+  test('a rejected stale refresh keeps a newer sign-in', async () => {
+    await seed(10 * SEC);
+    refreshMock.mockImplementation(async () => {
+      await saveTokens('password', nextTokens());
+      throw new AuthError('INVALID_GRANT');
+    });
+    expect(await refreshInBackground()).toBe(true);
+    expect(await readRefresh()).toEqual({ refreshToken: 'refresh-new', provider: 'password' });
+    expect(await readAccess()).toEqual(expect.objectContaining({ accessToken: 'access-new' }));
+    expect(await sessionExpiredItem.getValue()).toBe(false);
+  });
+
+  test('no stale access token after a rejected refresh', async () => {
+    await seed(10 * SEC);
+    refreshMock.mockRejectedValue(new AuthError('INVALID_GRANT'));
+    expect(await getAccessToken()).toBeNull();
+  });
+
+  test('session expiry signs out and flags it', async () => {
+    await seed(60 * MIN);
+    authHooks.onSessionExpired();
+    await vi.waitFor(async () => {
+      expect(await sessionExpiredItem.getValue()).toBe(true);
+    });
+    expect(await readRefresh()).toBeNull();
+    expect(await readAccess()).toBeNull();
   });
 
   test('signed out returns null token', async () => {

@@ -1,6 +1,6 @@
 import { LIMITS } from '@/config/app.config';
 import type { AuthHooks } from '@/lib/api/client';
-import { ApiError } from '@/lib/api/errors';
+import { ApiError, isRejection } from '@/lib/api/errors';
 import { createLogger } from '@/lib/logger';
 import { sendMessage } from '@/lib/messaging';
 import {
@@ -24,7 +24,6 @@ const log = createLogger('auth');
 
 const SKEW_MS = LIMITS.TOKEN_REFRESH_SKEW_SEC * 1000;
 const ALARM_WINDOW_MS = (LIMITS.SYNC_ALARM_PERIOD_MIN * 60 + LIMITS.TOKEN_REFRESH_SKEW_SEC) * 1000;
-const DEFINITE_REJECTION_STATUSES: readonly number[] = [400, 401];
 
 const providers = new Map<AuthProviderId, AuthProvider>();
 let inFlight: Promise<boolean> | null = null;
@@ -75,11 +74,14 @@ export async function isSignedIn(): Promise<boolean> {
 }
 
 export async function getAccessToken(): Promise<string | null> {
-  if ((await readRefresh()) === null) return null;
+  const stored = await readRefresh();
+  if (stored === null) return null;
   const access = await readAccess();
   if (access !== null && access.expiresAt - Date.now() >= SKEW_MS) return access.accessToken;
   if (await refresh()) return (await readAccess())?.accessToken ?? null;
-  // Refresh failed: a token that has not expired yet is still usable for its last seconds.
+  // A rejected refresh signed the user out: never hand out the old session's token.
+  if ((await readRefresh())?.refreshToken !== stored.refreshToken) return null;
+  // Refresh failed transiently: a token that has not expired yet is still usable for its last seconds.
   return access !== null && access.expiresAt > Date.now() ? access.accessToken : null;
 }
 
@@ -106,11 +108,7 @@ function isDefiniteRejection(error: unknown): boolean {
     return error.code === 'INVALID_GRANT' || error.code === 'BAD_CREDENTIALS';
   if (error instanceof ApiError) {
     if (error.code === 'UNAUTHORIZED') return true;
-    return (
-      error.code === 'HTTP' &&
-      error.status !== undefined &&
-      DEFINITE_REJECTION_STATUSES.includes(error.status)
-    );
+    return error.code === 'HTTP' && isRejection(error);
   }
   return false;
 }
@@ -121,6 +119,14 @@ async function markExpired(): Promise<void> {
   } catch (error) {
     log.error('setting the session-expired flag failed', { error });
   }
+}
+
+/**
+ * The session changed while a refresh was in flight (sign-out or a new sign-in elsewhere),
+ * so its result must not overwrite or clear the newer state.
+ */
+async function sessionChanged(refreshToken: string): Promise<boolean> {
+  return (await readRefresh())?.refreshToken !== refreshToken;
 }
 
 async function runRefresh(): Promise<boolean> {
@@ -135,6 +141,13 @@ async function runRefresh(): Promise<boolean> {
   try {
     tokens = await provider.refresh(stored.refreshToken);
   } catch (error) {
+    if (await sessionChanged(stored.refreshToken)) {
+      log.info('session changed during a failed refresh, keeping the newer state', {
+        provider: stored.provider,
+        error,
+      });
+      return (await readRefresh()) !== null;
+    }
     if (isDefiniteRejection(error)) {
       log.warn('refresh rejected, signing out', { provider: stored.provider, error });
       await clearTokens();
@@ -143,6 +156,12 @@ async function runRefresh(): Promise<boolean> {
     }
     log.warn('refresh failed, keeping tokens', { provider: stored.provider, error });
     return false;
+  }
+  if (await sessionChanged(stored.refreshToken)) {
+    log.info('session changed during refresh, dropping the refreshed tokens', {
+      provider: stored.provider,
+    });
+    return (await readRefresh()) !== null;
   }
   try {
     await saveTokens(stored.provider, tokens);
@@ -165,6 +184,16 @@ export async function refreshIfExpiringBeforeNextAlarm(): Promise<void> {
   await refreshInBackground();
 }
 
+/** D15: the server rejected a freshly refreshed token, so sign out locally and show the banner. */
+async function expireSession(): Promise<void> {
+  try {
+    await clearTokens();
+  } catch (error) {
+    log.error('clearing tokens on session expiry failed', { error });
+  }
+  await markExpired();
+}
+
 export async function signOut(): Promise<void> {
   const stored = await readRefresh();
   const provider = stored ? providers.get(stored.provider) : undefined;
@@ -184,8 +213,9 @@ export async function signOut(): Promise<void> {
 export const authHooks: AuthHooks = {
   getAccessToken,
   refresh,
+  isSignedIn,
   onSessionExpired() {
-    void markExpired();
+    void expireSession();
   },
 };
 

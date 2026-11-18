@@ -19,10 +19,15 @@ async function caught(p: Promise<unknown>): Promise<ApiError> {
   throw new Error('expected rejection');
 }
 
-function hooks(refresh: boolean, onSessionExpired = vi.fn<() => void>()): AuthHooks {
+function hooks(
+  refresh: boolean,
+  onSessionExpired = vi.fn<() => void>(),
+  signedIn = true,
+): AuthHooks {
   return {
     getAccessToken: () => Promise.resolve('tok'),
     refresh: () => Promise.resolve(refresh),
+    isSignedIn: () => Promise.resolve(signedIn),
     onSessionExpired,
   };
 }
@@ -62,6 +67,34 @@ describe('api client', () => {
     expect(e.code).toBe('UNAUTHORIZED');
     expect(onSessionExpired).toHaveBeenCalledTimes(1);
     expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  test('transient refresh failure keeps the session', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(json({}, 401));
+    const onSessionExpired = vi.fn<() => void>();
+    const api = createApiClient({
+      baseUrl: 'https://x.test',
+      fetchImpl,
+      auth: hooks(false, onSessionExpired, true),
+    });
+    const e = await caught(api.request('/a', { schema, auth: true }));
+    expect(e.code).toBe('NETWORK');
+    expect(onSessionExpired).not.toHaveBeenCalled();
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  test('rejected refresh reports UNAUTHORIZED once', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(json({}, 401));
+    const onSessionExpired = vi.fn<() => void>();
+    const api = createApiClient({
+      baseUrl: 'https://x.test',
+      fetchImpl,
+      auth: hooks(false, onSessionExpired, false),
+    });
+    const e = await caught(api.request('/a', { schema, auth: true }));
+    expect(e.code).toBe('UNAUTHORIZED');
+    // The background already signed out and flagged expiry when it saw the rejection.
+    expect(onSessionExpired).not.toHaveBeenCalled();
   });
 
   test('maps 503 to HTTP with status', async () => {
