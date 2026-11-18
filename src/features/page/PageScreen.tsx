@@ -1,16 +1,53 @@
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCount, t } from '@/lib/i18n';
+import { createLogger } from '@/lib/logger';
 import { getPageInfo } from '@/lib/page';
 import { captureActiveTab } from '@/lib/screenshot';
+import { pendingSelectionItem, readPendingSelection, type PendingSelection } from '@/lib/storage';
+
+const log = createLogger('PageScreen');
 
 export default function PageScreen() {
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ['pageInfo'],
     queryFn: getPageInfo,
   });
+  const [sent, setSent] = useState<PendingSelection | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    readPendingSelection()
+      .then((value) => {
+        if (active) setSent(value);
+      })
+      .catch((error: unknown) => {
+        log.error('read pending selection failed', { error });
+      });
+    const unwatch = pendingSelectionItem.watch(() => {
+      readPendingSelection()
+        .then((value) => {
+          if (active) setSent(value);
+        })
+        .catch((error: unknown) => {
+          log.error('read pending selection failed', { error });
+        });
+    });
+    return () => {
+      active = false;
+      unwatch();
+    };
+  }, []);
+
+  const dismiss = () => {
+    pendingSelectionItem.setValue(null).catch((error: unknown) => {
+      log.error('pendingSelection dismiss failed', { error });
+    });
+  };
+
   const shot = useMutation({ mutationFn: captureActiveTab });
 
   const retry = (
@@ -28,6 +65,23 @@ export default function PageScreen() {
   return (
     <div className="space-y-4 p-4">
       <h1 className="text-lg font-semibold">{t('page.title')}</h1>
+      {sent && (
+        <div className="space-y-2 rounded border p-3 text-sm">
+          <p className="font-medium">{t('page.sentSelection')}</p>
+          <p className="break-words whitespace-pre-wrap">
+            {sent.text === '' ? t('page.noSelection') : sent.text}
+          </p>
+          {sent.truncated && (
+            <p className="text-muted-foreground">
+              {t('text.truncated', [formatCount(sent.shown), formatCount(sent.total)])}
+            </p>
+          )}
+          {sent.sourceUrl && <p className="break-all">{sent.sourceUrl}</p>}
+          <Button variant="outline" size="sm" onClick={dismiss}>
+            {t('common.dismiss')}
+          </Button>
+        </div>
+      )}
       {isPending && <Skeleton className="h-16" />}
       {isError && (
         <Alert className="flex-col">

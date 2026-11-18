@@ -4,12 +4,14 @@ page:
   selection: Selected text
   noAccess: Can't access this page yet. Click the extension icon or press Alt+Shift+S, then Retry. Browser pages like settings or the extension store can't be read.
   restricted: Your browser doesn't allow extensions on this page.
+  sentSelection: Sent selection
   noSelection: No text selected on this page.
 text:
   truncated: Showing $1 of $2 characters.
 common:
   retry: Retry
   loading: Loading…
+  dismiss: Dismiss
 nav:
   home: Home
   settings: Settings

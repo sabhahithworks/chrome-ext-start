@@ -15,7 +15,13 @@ export default defineConfig({
     default_locale: 'en',
     description: 'A production-grade side panel extension starter.',
     minimum_chrome_version: '116',
-    permissions: ['storage', 'activeTab', 'scripting'],
+    permissions: ['storage', 'activeTab', 'scripting', 'contextMenus'],
     action: {},
+    commands: {
+      'open-side-panel': {
+        suggested_key: { default: 'Alt+Shift+S' },
+        description: 'Open the side panel',
+      },
+    },
   },
 });

@@ -1,11 +1,34 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import PageScreen from '@/features/page/PageScreen';
 import { getPageInfo } from '@/lib/page';
+import { pendingSelectionItem } from '@/lib/storage';
 import { captureActiveTab } from '@/lib/screenshot';
 
 vi.mock('@/lib/page');
+const setValueMock = vi.hoisted(() => vi.fn<(v: unknown) => Promise<void>>());
+vi.mock('@/lib/storage', () => {
+  let value: unknown = null;
+  const watchers = new Set<(v: unknown) => void>();
+  setValueMock.mockImplementation((v: unknown) => {
+    value = v;
+    watchers.forEach((w) => {
+      w(v);
+    });
+    return Promise.resolve();
+  });
+  return {
+    pendingSelectionItem: {
+      setValue: setValueMock,
+      watch: (cb: (v: unknown) => void) => {
+        watchers.add(cb);
+        return () => watchers.delete(cb);
+      },
+    },
+    readPendingSelection: () => Promise.resolve(value),
+  };
+});
 vi.mock('@/lib/screenshot', () => ({ captureActiveTab: vi.fn() }));
 
 vi.mock('@/lib/i18n', async () => {
@@ -58,6 +81,26 @@ describe('PageScreen', () => {
     vi.mocked(getPageInfo).mockReset();
   });
   afterEach(cleanup);
+
+  test('shows sent selection card', async () => {
+    vi.mocked(getPageInfo).mockResolvedValue(okInfo(''));
+    await pendingSelectionItem.setValue({
+      text: 'sent words',
+      shown: 10,
+      total: 10,
+      truncated: false,
+      sourceUrl: 'https://src.example/p',
+      createdAt: Date.now(),
+    });
+    renderPage();
+    expect(await screen.findByText('sent words')).toBeTruthy();
+    expect(screen.getByText('https://src.example/p')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(setValueMock).toHaveBeenLastCalledWith(null);
+    await waitFor(() => {
+      expect(screen.queryByText('sent words')).toBeNull();
+    });
+  });
 
   test('shows no-selection note', async () => {
     vi.mocked(getPageInfo).mockResolvedValue(okInfo(''));
