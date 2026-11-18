@@ -1,8 +1,12 @@
 import { Suspense } from 'react';
 import type { KeyboardEvent } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { APP_NAME } from '@/config/app.config';
+import { RequireAuth } from '@/features/auth/RequireAuth';
+import { useSession } from '@/features/auth/useSession';
 import { SCREENS } from '@/features/registry';
 import type { ScreenDef } from '@/features/registry';
 import { t } from '@/lib/i18n';
@@ -35,6 +39,8 @@ export function AppShell({ screens = SCREENS }: AppShellProps) {
   }
 
   const Screen = active?.component;
+  const { expired, dismissExpired } = useSession();
+  const body = Screen && <Screen />;
 
   return (
     <div className="bg-background text-foreground flex h-screen flex-col">
@@ -42,11 +48,19 @@ export function AppShell({ screens = SCREENS }: AppShellProps) {
         <span className="text-sm font-semibold">{APP_NAME}</span>
         <div data-slot="header-actions" />
       </header>
+      {expired && (
+        <Alert className="flex items-center justify-between gap-2 rounded-none border-x-0">
+          <span>{t('auth.expired')}</span>
+          <Button variant="outline" size="sm" onClick={dismissExpired}>
+            {t('common.dismiss')}
+          </Button>
+        </Alert>
+      )}
       <main className="flex-1 overflow-y-auto">
         {Screen && (
           <ErrorBoundary key={active.id}>
             <Suspense fallback={<Skeleton className="m-4 h-24" />}>
-              <Screen />
+              {active.requiresAuth ? <RequireAuth>{body}</RequireAuth> : body}
             </Suspense>
           </ErrorBoundary>
         )}

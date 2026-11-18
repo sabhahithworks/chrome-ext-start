@@ -2,12 +2,18 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { APP_NAME } from '@/config/app.config';
 import '@/assets/globals.css';
+import { setApiAuth } from '@/lib/api/client';
+import { registerEnabledProviders } from '@/lib/auth/providers';
+import { authHooks } from '@/lib/auth/session';
 import { createLogger } from '@/lib/logger';
 import { DEFAULT_SETTINGS, readSettings, settingsItem } from '@/lib/storage';
 import { applyTheme } from '@/lib/theme';
 import App from './App';
 
 const log = createLogger('sidepanel');
+
+registerEnabledProviders();
+setApiAuth(authHooks);
 
 document.title = APP_NAME;
 

@@ -2,11 +2,14 @@ import { SYNC_ALARM, ensureSyncAlarm, registerAlarmJob, runAlarmJobs } from '@/b
 import { getAppInfo } from '@/background/handlers';
 import { handleCommand } from '@/background/commands';
 import { handleMenuClick, setupContextMenu } from '@/background/contextMenu';
+import { registerEnabledProviders } from '@/lib/auth/providers';
 import { refreshIfExpiringBeforeNextAlarm, refreshInBackground } from '@/lib/auth/session';
 import { onMessage } from '@/lib/messaging';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('background');
+
+registerEnabledProviders();
 
 export default defineBackground(() => {
   onMessage('getAppInfo', () => getAppInfo());
