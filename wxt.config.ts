@@ -16,6 +16,12 @@ export default defineConfig({
     description: 'A production-grade side panel extension starter.',
     minimum_chrome_version: '116',
     permissions: ['storage', 'activeTab', 'scripting', 'contextMenus', 'alarms'],
+    host_permissions: [
+      ...new Set([
+        new URL(env.WXT_API_BASE_URL).origin + '/*',
+        ...(env.WXT_OAUTH_TOKEN_URL ? [new URL(env.WXT_OAUTH_TOKEN_URL).origin + '/*'] : []),
+      ]),
+    ],
     action: {},
     commands: {
       'open-side-panel': {
