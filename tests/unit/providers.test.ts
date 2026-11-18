@@ -7,5 +7,13 @@ describe('enabledProviders', () => {
     expect(enabledProviders({ password: true, oauth: false }).map((p) => p.id)).toEqual([
       'password',
     ]);
+    expect(enabledProviders({ password: false, oauth: true }).map((p) => p.id)).toEqual(['oauth']);
+  });
+
+  test('lists password before oauth', () => {
+    expect(enabledProviders({ password: true, oauth: true }).map((p) => p.id)).toEqual([
+      'password',
+      'oauth',
+    ]);
   });
 });
