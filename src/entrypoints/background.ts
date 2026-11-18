@@ -1,5 +1,9 @@
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('background');
+
 export default defineBackground(() => {
   browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((e: unknown) => {
-    console.error('[background] setPanelBehavior failed', e);
+    log.error('setPanelBehavior failed', { error: e });
   });
 });
