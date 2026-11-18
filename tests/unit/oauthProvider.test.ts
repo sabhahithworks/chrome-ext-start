@@ -109,6 +109,15 @@ describe('oauthProvider', () => {
     ).toThrow(expect.objectContaining({ code: 'FAILED', message: 'User said no' }));
   });
 
+  test('maps a failed auth page load to failed, not cancelled', async () => {
+    launchWebAuthFlow.mockRejectedValue(new Error('Authorization page could not be loaded.'));
+    const err = await caught(oauthProvider.signIn());
+    expect(err).toBeInstanceOf(AuthError);
+    expect((err as AuthError).code).toBe('FAILED');
+    expect((err as AuthError).message).toBe('Authorization page could not be loaded.');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   test('maps closed window to cancelled', async () => {
     launchWebAuthFlow.mockRejectedValue(new Error('The user did not approve access.'));
     const err = await caught(oauthProvider.signIn());

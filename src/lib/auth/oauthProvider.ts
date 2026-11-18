@@ -5,6 +5,7 @@ import { getEnv, type Env } from '@/lib/env';
 import { createLogger } from '@/lib/logger';
 import { codeChallengeS256, randomUrlSafe } from './pkce';
 import { AuthError, type AuthProvider, type Tokens } from './types';
+import { errorMessage } from '@/lib/errorMessage';
 
 const log = createLogger('auth.oauth');
 
@@ -168,17 +169,25 @@ function toSignInError(error: unknown): AuthError {
   if (error instanceof ApiError && error.code === 'INVALID_RESPONSE') {
     return new AuthError('INVALID_RESPONSE', undefined, { cause: error });
   }
-  const message = error instanceof Error ? error.message : String(error);
+  const message = errorMessage(error);
   return new AuthError('FAILED', message, { cause: error });
 }
+
+const USER_CANCELLED = /did not approve|cancel/i;
 
 async function launchFlow(url: string): Promise<string> {
   let redirect: string | undefined;
   try {
     redirect = await browser.identity.launchWebAuthFlow({ url, interactive: true });
   } catch (error) {
-    log.warn('auth flow ended without a redirect', { error });
-    throw new AuthError('CANCELLED', undefined, { cause: error });
+    const message = errorMessage(error);
+    // Chromium rejects with "The user did not approve access." when the window is closed.
+    if (USER_CANCELLED.test(message)) {
+      log.info('auth flow cancelled by the user');
+      throw new AuthError('CANCELLED', undefined, { cause: error });
+    }
+    log.warn('auth flow failed', { error: message });
+    throw new AuthError('FAILED', message, { cause: error });
   }
   if (!redirect) throw new AuthError('CANCELLED');
   return redirect;
