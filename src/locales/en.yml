@@ -1,4 +1,7 @@
 page:
+  title: Page
+  url: URL
+  selection: Selected text
   noAccess: Can't access this page yet. Click the extension icon or press Alt+Shift+S, then Retry. Browser pages like settings or the extension store can't be read.
   restricted: Your browser doesn't allow extensions on this page.
   noSelection: No text selected on this page.
@@ -38,6 +41,7 @@ ai:
   downloading: Downloading model… $1%
   failed: 'On-device AI failed: $1. Try again.'
 shot:
+  capture: Screenshot
   failed: "Couldn't capture this tab: $1. Try again."
   download: Download PNG
 menu:
