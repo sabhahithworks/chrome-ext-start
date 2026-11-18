@@ -18,6 +18,22 @@ export default function PageScreen() {
   });
   const [sent, setSent] = useState<PendingSelection | null>(null);
 
+  // The panel stays open across tab switches, so re-read the page whenever the active tab changes.
+  useEffect(() => {
+    const reload = () => {
+      void refetch();
+    };
+    const onUpdated = (_id: number, change: Browser.tabs.OnUpdatedInfo, tab: Browser.tabs.Tab) => {
+      if (tab.active && change.status === 'complete') reload();
+    };
+    browser.tabs.onActivated.addListener(reload);
+    browser.tabs.onUpdated.addListener(onUpdated);
+    return () => {
+      browser.tabs.onActivated.removeListener(reload);
+      browser.tabs.onUpdated.removeListener(onUpdated);
+    };
+  }, [refetch]);
+
   useEffect(() => {
     let active = true;
     readPendingSelection()

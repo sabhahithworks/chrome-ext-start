@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { fakeBrowser } from 'wxt/testing/fake-browser';
 import PageScreen from '@/features/page/PageScreen';
 import { getPageInfo } from '@/lib/page';
 import { pendingSelectionItem } from '@/lib/storage';
@@ -100,6 +101,18 @@ describe('PageScreen', () => {
     await waitFor(() => {
       expect(screen.queryByText('sent words')).toBeNull();
     });
+  });
+
+  test('refetches page info when the active tab changes', async () => {
+    vi.mocked(getPageInfo)
+      .mockResolvedValueOnce(okInfo('first tab'))
+      .mockResolvedValueOnce({ ...okInfo('second tab'), title: 'Second' });
+    renderPage();
+    expect(await screen.findByText('first tab')).toBeTruthy();
+    await fakeBrowser.tabs.onActivated.trigger({ tabId: 2, windowId: 1 });
+    expect(await screen.findByText('second tab')).toBeTruthy();
+    expect(screen.getByText('Second')).toBeTruthy();
+    expect(screen.queryByText('first tab')).toBeNull();
   });
 
   test('shows no-selection note', async () => {
