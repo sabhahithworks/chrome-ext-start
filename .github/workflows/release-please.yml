@@ -1,0 +1,68 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+
+  submit:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Check Chrome Web Store secrets
+        run: |
+          for name in CHROME_EXTENSION_ID CHROME_CLIENT_ID CHROME_CLIENT_SECRET CHROME_REFRESH_TOKEN; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing Chrome Web Store secret $name"
+              exit 1
+            fi
+          done
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+      - name: Write .env from repository variables
+        run: |
+          {
+            echo "WXT_API_BASE_URL=$WXT_API_BASE_URL"
+            echo "WXT_OAUTH_AUTHORIZE_URL=$WXT_OAUTH_AUTHORIZE_URL"
+            echo "WXT_OAUTH_TOKEN_URL=$WXT_OAUTH_TOKEN_URL"
+            echo "WXT_OAUTH_CLIENT_ID=$WXT_OAUTH_CLIENT_ID"
+            echo "WXT_OAUTH_SCOPES=$WXT_OAUTH_SCOPES"
+          } > .env
+        env:
+          WXT_API_BASE_URL: ${{ vars.WXT_API_BASE_URL }}
+          WXT_OAUTH_AUTHORIZE_URL: ${{ vars.WXT_OAUTH_AUTHORIZE_URL }}
+          WXT_OAUTH_TOKEN_URL: ${{ vars.WXT_OAUTH_TOKEN_URL }}
+          WXT_OAUTH_CLIENT_ID: ${{ vars.WXT_OAUTH_CLIENT_ID }}
+          WXT_OAUTH_SCOPES: ${{ vars.WXT_OAUTH_SCOPES }}
+      # After .env: postinstall runs `wxt prepare`, which validates the env.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm zip
+      - name: Submit to Chrome Web Store
+        run: pnpm wxt submit --chrome-zip .output/*-chrome.zip
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}

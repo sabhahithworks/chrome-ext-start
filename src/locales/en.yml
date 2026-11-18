@@ -1,0 +1,67 @@
+page:
+  title: Page
+  pageTitle: Title
+  url: URL
+  selection: Selected text
+  noAccess: Can't access this page yet. Click the extension icon or press Alt+Shift+S, then Retry. Browser pages like settings or the extension store can't be read.
+  restricted: Your browser doesn't allow extensions on this page.
+  sentSelection: Sent selection
+  noSelection: No text selected on this page.
+  allowAllSites: Allow on all sites
+  allowFailed: "Couldn't request site access: $1. Try again."
+text:
+  truncated: Showing $1 of $2 characters.
+common:
+  retry: Retry
+  loading: Loading…
+  dismiss: Dismiss
+nav:
+  home: Home
+  ai: AI
+  settings: Settings
+settings:
+  theme: Theme
+  themeSystem: System
+  themeLight: Light
+  themeDark: Dark
+home:
+  connected: Connected to background · v$1
+  bgDown: The background service isn't responding. Reload the extension from your browser's extensions page, then reopen this panel.
+errors:
+  screen: Something went wrong on this screen. Reload the panel to continue.
+  reload: Reload panel
+api:
+  network: Couldn't reach the server. Check your connection, then Retry.
+  timeout: The server took too long to respond. Retry in a moment.
+  server: The server had a problem ($1). Retry in a moment.
+  invalid: The server sent a response this version can't read. Update the extension or contact support.
+auth:
+  expired: Your session expired. Sign in again.
+  required: Sign in to use this.
+  badCredentials: Email or password is incorrect.
+  cancelled: Sign-in was cancelled.
+  failed: "Couldn't sign in: $1. Try again."
+  email: Email
+  password: Password
+  signIn: Sign in
+  sso: Continue with SSO
+  signOut: Sign out
+  providerPassword: Email and password
+  providerOauth: Single sign-on
+ai:
+  unavailable: On-device AI isn't supported in this browser or on this device.
+  download: Download on-device model
+  downloading: Downloading model… $1%
+  failed: 'On-device AI failed: $1. Try again.'
+  providerBuiltin: On-device AI
+  send: Send
+  stop: Stop
+  summarize: Summarize this page
+  requirements: See requirements
+  placeholder: Ask the on-device model
+shot:
+  capture: Screenshot
+  failed: "Couldn't capture this tab: $1. Try again."
+  download: Download PNG
+menu:
+  sendSelection: Send selection to $1
